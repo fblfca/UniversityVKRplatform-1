@@ -4,4 +4,4 @@ app = FastAPI(title="VKR Auth Service")
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "servdocker compose downice": "topic"}
+    return {"status": "ok", "service": "topic"}
