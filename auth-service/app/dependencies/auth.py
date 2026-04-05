@@ -31,18 +31,18 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     if credentials is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Требуется токен доступа")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Access token is required")
 
     payload = verify_token(credentials.credentials)
     if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Некорректный токен")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
 
     user_id = payload.get("sub")
     if not user_id:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="В токене нет идентификатора пользователя")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token does not contain user id")
 
     user = db.get(User, UUID(user_id))
     if user is None or not user.is_active:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь недоступен")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User is unavailable")
 
     return user

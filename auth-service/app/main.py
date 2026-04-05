@@ -5,7 +5,7 @@ from app.routers import auth_router
 
 app = FastAPI(
     title="VKR Auth Service",
-    description="Сервис аутентификации, входа и выдачи JWT для VKR Platform",
+    description="Authentication service for VKR Platform",
     version="0.2.0",
 )
 

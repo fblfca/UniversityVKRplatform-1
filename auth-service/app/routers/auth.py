@@ -42,7 +42,7 @@ router = APIRouter(tags=["auth"])
 def register_user(payload: RegisterRequest, db: Session = Depends(get_db)) -> User:
     existing_user = db.scalar(select(User).where(User.email == payload.email))
     if existing_user:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Пользователь с таким email уже существует")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this email already exists")
 
     user = User(
         email=payload.email,
@@ -60,7 +60,7 @@ def register_user(payload: RegisterRequest, db: Session = Depends(get_db)) -> Us
 def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse:
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверный email или пароль")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     now = get_code_expiration(0)
     db.execute(
@@ -80,7 +80,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     db.refresh(login_code)
 
     return LoginResponse(
-        message="Код входа создан. Пока email-service не подключен, код возвращается в ответе для тестирования.",
+        message="Login code created. Until email-service is connected, the code is returned in the response for testing.",
         code_expires_at=login_code.expires_at,
         debug_code=code if SHOW_LOGIN_CODE else None,
     )
@@ -90,7 +90,7 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
 def verify_login_code(payload: VerifyRequest, db: Session = Depends(get_db)) -> VerifyResponse:
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Пользователь не найден")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     login_code = db.scalar(
         select(LoginCode)
@@ -102,11 +102,11 @@ def verify_login_code(payload: VerifyRequest, db: Session = Depends(get_db)) -> 
         .order_by(LoginCode.created_at.desc())
     )
     if login_code is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Код не найден или уже использован")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Code not found or already used")
 
     now = get_code_expiration(0)
     if login_code.expires_at < now:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Срок действия кода истек")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Code has expired")
 
     login_code.consumed_at = now
     db.commit()
