@@ -1,17 +1,9 @@
 fastapi==0.115.0
-uvicorn[standard]==0.30.6      # обязательно [standard] — даёт нам http-tools, websockets и т.д.
-pydantic[email]==2.9.2         # для валидации + email валидации
-
-# Для работы с базой данных (PostgreSQL + Alembic)
+uvicorn[standard]==0.30.6
+pydantic[email]==2.9.2
 sqlalchemy==2.0.35
-psycopg2-binary==2.9.9         # драйвер PostgreSQL
-alembic==1.13.3                # миграции БД
-
-# Для JWT (аутентификация)
+psycopg2-binary==2.9.9
+alembic==1.13.3
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4         # хэширование паролей
-
-# Удобства FastAPI
-python-multipart==0.0.9        # для форм (если будет регистрация с файлами)
-
+passlib[bcrypt]==1.7.4
 python-dotenv==1.0.1
