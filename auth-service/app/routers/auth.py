@@ -1,3 +1,4 @@
+import logging
 import sys
 from pathlib import Path
 
@@ -5,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.core.config import LOGIN_CODE_TTL_MINUTES, SHOW_LOGIN_CODE, access_token_ttl
+from app.core.config import LOGIN_CODE_TTL_MINUTES, LOG_LOGIN_CODE, SHOW_LOGIN_CODE, access_token_ttl
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models import LoginCode, User
@@ -19,6 +20,7 @@ from app.schemas.auth import (
     VerifyRequest,
     VerifyResponse,
 )
+from app.utils.notifications import send_login_code_email
 from app.utils.security import generate_login_code, get_code_expiration, hash_password, verify_password
 
 
@@ -36,6 +38,7 @@ from shared.jwt_utils import create_access_token  # noqa: E402
 
 
 router = APIRouter(tags=["auth"])
+logger = logging.getLogger(__name__)
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -79,8 +82,16 @@ def login(payload: LoginRequest, db: Session = Depends(get_db)) -> LoginResponse
     db.commit()
     db.refresh(login_code)
 
+    email_sent = send_login_code_email(user.email, code)
+    if LOG_LOGIN_CODE:
+        logger.info("Debug login code for %s: %s", user.email, code)
+
     return LoginResponse(
-        message="Login code created. Until email-service is connected, the code is returned in the response for testing.",
+        message=(
+            "Login code created. "
+            f"SMTP delivery status: {'sent' if email_sent else 'not sent'}. "
+            "Debug code is also returned for local testing."
+        ),
         code_expires_at=login_code.expires_at,
         debug_code=code if SHOW_LOGIN_CODE else None,
     )
